@@ -1,0 +1,30 @@
+{
+  "name": "web-app",
+  "version": "1.1.0",
+  "description": "A web app for managing Art and Design items using Node.js, Express, and SQLite with Europeana API integration, pagination, and CRUD operations for local data management.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.8",
+    "cors": "^2.8.5",
+    "express": "^4.21.1",
+    "multer": "^1.4.5-lts.1",
+    "sqlite3": "^5.1.7"
+  },
+  "author": "",
+  "license": "ISC",
+  "keywords": [
+    "Node.js",
+    "Express",
+    "SQLite",
+    "Europeana",
+    "Pagination",
+    "Art",
+    "Design",
+    "API",
+    "CRUD",
+    "Web App"
+  ]
+}
