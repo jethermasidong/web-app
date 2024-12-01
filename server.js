@@ -7,8 +7,9 @@ const cors = require('cors'); // Import CORS
 const app = express();
 const port = 3000;
 
-// Enable CORS for all origins (can be adjusted to allow specific origins)
-app.use(cors());  // This will allow all origins, adjust as needed for security
+app.use(cors({
+  origin: 'https://your-frontend-domain.com'  // Specify your frontend URL here
+}));
 
 // Set up SQLite database
 const db = new sqlite3.Database('./art_gallery.db', (err) => {
