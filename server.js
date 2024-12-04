@@ -4,8 +4,10 @@ const path = require('path');
 const fs = require('fs');
 const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
+const axios = require('axios');
+
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000; 
 
 const europeanaApiKey = 'nutchtfulor';
 
@@ -16,12 +18,13 @@ const allowedOrigins = [
   'https://web-app-mgx2.onrender.com'
 ];
 
+
 app.use(express.static(__dirname));
+
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
-
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -78,6 +81,7 @@ const upload = multer({ storage: storage });
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
+
 app.get('/upload', (req, res) => {
   res.sendFile(path.join(__dirname, 'upload.html'));
 });
@@ -102,11 +106,6 @@ app.post('/upload', upload.single('image'), (req, res) => {
 
     res.status(200).json({ message: 'Art item uploaded successfully' });
   });
-
-  console.log('Title:', title);
-  console.log('Description:', description);
-  console.log('PIN:', pin);
-  console.log('Uploaded file:', req.file);
 });
 
 app.get('/art-items', (req, res) => {
@@ -116,7 +115,7 @@ app.get('/art-items', (req, res) => {
       console.error('Error fetching art items:', err.message);
       return res.status(500).json({ message: 'Error fetching art items' });
     }
-    res.status(200).json(rows); 
+    res.status(200).json(rows);
   });
 });
 
@@ -134,6 +133,26 @@ app.get('/art-item/:id', (req, res) => {
     }
     res.status(200).json(row);
   });
+});
+
+app.get('/artworks-page-2', async (req, res) => {
+  try {
+    const response = await axios.get('https://api.artic.edu/api/v1/artworks?page=2&limit=100');
+    res.status(200).json(response.data);
+  } catch (error) {
+    console.error('Error fetching artworks:', error.message);
+    res.status(500).json({ message: 'Error fetching artworks' });
+  }
+});
+
+app.get('/artworks-fields', async (req, res) => {
+  try {
+    const response = await axios.get('https://api.artic.edu/api/v1/artworks?fields=id,title,artist_display,date_display,main_reference_number');
+    res.status(200).json(response.data);
+  } catch (error) {
+    console.error('Error fetching artworks:', error.message);
+    res.status(500).json({ message: 'Error fetching artworks' });
+  }
 });
 
 app.patch('/update-art/:id', upload.single('image'), (req, res) => {
@@ -179,6 +198,7 @@ app.patch('/update-art/:id', upload.single('image'), (req, res) => {
   });
 });
 
+// Route to delete art items
 app.delete('/delete-art/:id', (req, res) => {
   const artId = req.params.id;
   const { pin } = req.body;
@@ -197,23 +217,16 @@ app.delete('/delete-art/:id', (req, res) => {
       return res.status(404).json({ message: 'Art item not found' });
     }
 
-    console.log('Fetched item:', row); 
-
     if (row.pin !== pin) {
-      console.log(`PIN mismatch: Provided PIN = ${pin}, Stored PIN = ${row.pin}`);
       return res.status(403).json({ message: 'Invalid PIN' });
     }
 
     const filePath = path.join(__dirname, 'uploads', path.basename(row.file_path));
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
-      console.log(`File ${filePath} deleted.`);
-    } else {
-      console.log(`File ${filePath} does not exist.`);
     }
 
     const deleteQuery = 'DELETE FROM items WHERE id = ?';
-
     db.run(deleteQuery, [artId], function(err) {
       if (err) {
         console.error('Error deleting art item:', err.message);
@@ -221,18 +234,15 @@ app.delete('/delete-art/:id', (req, res) => {
       }
 
       if (this.changes > 0) {
-        console.log(`Art item with id ${artId} deleted successfully.`);
         res.status(200).json({ message: 'Art item deleted successfully' });
       } else {
-        console.log(`No changes made. Art item with id ${artId} not found.`);
         res.status(404).json({ message: 'Art item not found' });
       }
     });
   });
 });
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-const PORT = process.env.PORT || 3000;
+// Start the server
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  console.log(`Server is running at http://localhost:${port}`);
 });
