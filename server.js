@@ -16,6 +16,10 @@ const allowedOrigins = [
   'https://web-app-mgx2.onrender.com'
 ];
 
+app.get('/', (req, res) => {
+  res.send('Welcome to my Render deployment!');
+}); 
+
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
