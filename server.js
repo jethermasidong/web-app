@@ -3,29 +3,42 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const sqlite3 = require('sqlite3').verbose();
-const cors = require('cors'); // Import CORS
+const cors = require('cors');
 const app = express();
 const port = 3000;
 
+const europeanaApiKey = 'nutchtfulor';
+
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://jethermasidong.github.io/web-app',
+  'http://127.0.0.1:5500' 
+];
+
 app.use(cors({
-  origin: 'https://your-frontend-domain.com'  // Specify your frontend URL here
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  }
 }));
 
-// Set up SQLite database
 const db = new sqlite3.Database('./art_gallery.db', (err) => {
   if (err) {
     console.error('Error connecting to SQLite:', err.message);
   } else {
     console.log('Connected to SQLite database.');
 
-    // Create 'items' table if it doesn't exist
     db.run(`
       CREATE TABLE IF NOT EXISTS items (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
         description TEXT NOT NULL,
         file_path TEXT NOT NULL,
-        pin TEXT
+        pin TEXT,
+        date_created DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `, (err) => {
       if (err) {
@@ -37,39 +50,30 @@ const db = new sqlite3.Database('./art_gallery.db', (err) => {
   }
 });
 
-// Set up multer storage configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    // Set the upload directory to 'public/uploads'
-    const uploadDirectory = path.join(__dirname, 'public', 'uploads');
-
-    // Ensure the uploads directory exists; create if it doesn't
+    const uploadDirectory = path.join(__dirname, 'uploads');
     if (!fs.existsSync(uploadDirectory)) {
       fs.mkdirSync(uploadDirectory, { recursive: true });
     }
-
-    cb(null, uploadDirectory); // Set the directory where files will be uploaded
+    cb(null, uploadDirectory);
   },
   filename: (req, file, cb) => {
-    // Use a timestamp to avoid filename conflicts
     const fileExtension = path.extname(file.originalname);
     const fileName = Date.now() + fileExtension;
-    cb(null, fileName); // Set the uploaded file's name
+    cb(null, fileName);
   }
 });
 
 const upload = multer({ storage: storage });
 
-// Middleware to parse incoming form data
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Route to serve the upload form (optional, can be customized for your needs)
 app.get('/upload', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'upload.html'));
+  res.sendFile(path.join(__dirname, 'upload.html'));
 });
 
-// Route to handle file upload
 app.post('/upload', upload.single('image'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'No file uploaded' });
@@ -78,7 +82,6 @@ app.post('/upload', upload.single('image'), (req, res) => {
   const { title, description, pin } = req.body;
   const filePath = `/uploads/${req.file.filename}`;
 
-  // Insert data into SQLite database
   const insertQuery = `
     INSERT INTO items (title, description, file_path, pin)
     VALUES (?, ?, ?, ?)
@@ -89,18 +92,15 @@ app.post('/upload', upload.single('image'), (req, res) => {
       return res.status(500).json({ message: 'Database error' });
     }
 
-    console.log('Data saved to database:', { title, description, filePath, pin });
     res.status(200).json({ message: 'Art item uploaded successfully' });
   });
 
-  // Log the form data (title, description, pin) and file details for debugging
   console.log('Title:', title);
   console.log('Description:', description);
   console.log('PIN:', pin);
   console.log('Uploaded file:', req.file);
 });
 
-// Route to fetch all art items (Read)
 app.get('/art-items', (req, res) => {
   const selectQuery = 'SELECT * FROM items';
   db.all(selectQuery, [], (err, rows) => {
@@ -108,58 +108,123 @@ app.get('/art-items', (req, res) => {
       console.error('Error fetching art items:', err.message);
       return res.status(500).json({ message: 'Error fetching art items' });
     }
-    res.status(200).json({ artItems: rows });
+    res.status(200).json(rows); 
   });
 });
 
-// Route to update an art item (Update)
-app.put('/update-art/:id', upload.single('image'), (req, res) => {
+app.get('/art-item/:id', (req, res) => {
+  const artId = req.params.id;
+  const selectQuery = 'SELECT * FROM items WHERE id = ?';
+  
+  db.get(selectQuery, [artId], (err, row) => {
+    if (err) {
+      console.error('Error fetching art item:', err.message);
+      return res.status(500).json({ message: 'Error fetching art item' });
+    }
+    if (!row) {
+      return res.status(404).json({ message: 'Art item not found' });
+    }
+    res.status(200).json(row);
+  });
+});
+
+app.patch('/update-art/:id', upload.single('image'), (req, res) => {
   const artId = req.params.id;
   const { title, description, pin } = req.body;
   const filePath = req.file ? `/uploads/${req.file.filename}` : null;
 
-  // Update query with optional file path
-  const updateQuery = `
-    UPDATE items 
-    SET title = ?, description = ?, pin = ?, file_path = ? 
-    WHERE id = ?
-  `;
+  if (!pin) {
+    return res.status(400).json({ message: 'PIN is required for update' });
+  }
 
-  db.run(updateQuery, [title, description, pin || null, filePath, artId], function(err) {
+  db.get('SELECT * FROM items WHERE id = ?', [artId], (err, row) => {
     if (err) {
-      console.error('Error updating art item:', err.message);
-      return res.status(500).json({ message: 'Database error' });
+      console.error('Error fetching art item:', err.message);
+      return res.status(500).json({ message: 'Error fetching art item' });
     }
-    if (this.changes > 0) {
-      res.status(200).json({ message: 'Art item updated successfully' });
-    } else {
-      res.status(404).json({ message: 'Art item not found' });
+
+    if (!row) {
+      return res.status(404).json({ message: 'Art item not found' });
     }
+
+    if (row.pin !== pin) {
+      return res.status(403).json({ message: 'Invalid PIN' });
+    }
+
+    const updateQuery = `
+      UPDATE items 
+      SET title = ?, description = ?, pin = ?, file_path = ? 
+      WHERE id = ?
+    `;
+
+    db.run(updateQuery, [title, description, pin || null, filePath, artId], function(err) {
+      if (err) {
+        console.error('Error updating art item:', err.message);
+        return res.status(500).json({ message: 'Database error' });
+      }
+      if (this.changes > 0) {
+        res.status(200).json({ message: 'Art item updated successfully' });
+      } else {
+        res.status(404).json({ message: 'Art item not found' });
+      }
+    });
   });
 });
 
-// Route to delete an art item (Delete)
 app.delete('/delete-art/:id', (req, res) => {
   const artId = req.params.id;
-  const deleteQuery = 'DELETE FROM items WHERE id = ?';
+  const { pin } = req.body;
 
-  db.run(deleteQuery, [artId], function(err) {
+  if (!pin) {
+    return res.status(400).json({ message: 'PIN is required' });
+  }
+
+  db.get('SELECT * FROM items WHERE id = ?', [artId], (err, row) => {
     if (err) {
-      console.error('Error deleting art item:', err.message);
-      return res.status(500).json({ message: 'Database error' });
+      console.error('Error fetching art item:', err.message);
+      return res.status(500).json({ message: 'Error fetching art item' });
     }
-    if (this.changes > 0) {
-      res.status(200).json({ message: 'Art item deleted successfully' });
+
+    if (!row) {
+      return res.status(404).json({ message: 'Art item not found' });
+    }
+
+    console.log('Fetched item:', row); 
+
+    if (row.pin !== pin) {
+      console.log(`PIN mismatch: Provided PIN = ${pin}, Stored PIN = ${row.pin}`);
+      return res.status(403).json({ message: 'Invalid PIN' });
+    }
+
+    const filePath = path.join(__dirname, 'uploads', path.basename(row.file_path));
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      console.log(`File ${filePath} deleted.`);
     } else {
-      res.status(404).json({ message: 'Art item not found' });
+      console.log(`File ${filePath} does not exist.`);
     }
+
+    const deleteQuery = 'DELETE FROM items WHERE id = ?';
+
+    db.run(deleteQuery, [artId], function(err) {
+      if (err) {
+        console.error('Error deleting art item:', err.message);
+        return res.status(500).json({ message: 'Database error' });
+      }
+
+      if (this.changes > 0) {
+        console.log(`Art item with id ${artId} deleted successfully.`);
+        res.status(200).json({ message: 'Art item deleted successfully' });
+      } else {
+        console.log(`No changes made. Art item with id ${artId} not found.`);
+        res.status(404).json({ message: 'Art item not found' });
+      }
+    });
   });
 });
 
-// Serve static files from the 'public/uploads' folder
-app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Start the server and listen on port 3000
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });

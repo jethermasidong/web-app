@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Art Gallery - Collections</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.0.2/dist/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-[#F5F0CD] font-sans flex flex-col min-h-screen">
+
+    <header class="header fixed top-0 left-0 w-full h-20 bg-black text-white flex items-center justify-between px-6 shadow-lg z-10">
+        <a href="index.html" class="text-3xl font-bold">Pinta</a>
+        <div class="nav-links flex gap-6">
+            <a href="upload.html" class="text-white py-2 px-4 rounded-lg border border-white hover:bg-white hover:text-black transition-all">Add Artwork</a>
+            <a href="collections.html" class="text-white py-2 px-4 rounded-lg border border-white hover:bg-white hover:text-black transition-all">Collections</a>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-6 py-12 flex-1">
+        <div class="mb-8">
+            <div class="flex justify-center space-x-6">
+                <div>
+                    <label for="startDate" class="block text-gray-700 font-semibold mb-2">Start Date:</label>
+                    <input type="date" id="startDate" class="p-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" onchange="applyDateFilter()">
+                </div>
+                <div>
+                    <label for="endDate" class="block text-gray-700 font-semibold mb-2">End Date:</label>
+                    <input type="date" id="endDate" class="p-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" onchange="applyDateFilter()">
+                </div>
+            </div>
+        </div>
+
+        <div id="itemList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        </div>
+    </div>
+
+    <footer class="bg-black text-white py-6 mt-auto">
+        <div class="container mx-auto px-6 text-center">
+            <p>&copy; 2024 Pinta. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <div id="pinModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-1/3">
+            <h3 class="text-xl font-semibold mb-4">Enter PIN to Proceed</h3>
+            <input type="password" id="pinInput" class="p-3 border rounded-md shadow-sm w-full mb-4" placeholder="Enter PIN">
+            <div class="flex justify-end">
+                <button id="pinSubmitButton" class="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-700">Submit</button>
+                <button onclick="closeModal()" class="ml-4 bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-700">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentAction = '';
+        let currentItemId = null; 
+        let currentItemPin = '';
+
+        function loadUploadedItems() {
+            fetch('http://localhost:3000/art-items', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer nutchtfulor`
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    renderItems(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching items:', error);
+                    const itemList = document.getElementById('itemList');
+                    itemList.innerHTML = '<p class="text-red-600 text-center">Error fetching items.</p>';
+                });
+        }
+
+        function renderItems(items) {
+            const itemList = document.getElementById('itemList');
+            itemList.innerHTML = ''; 
+
+            if (Array.isArray(items) && items.length > 0) {
+                items.forEach(item => {
+                    const itemCard = document.createElement('div');
+                    itemCard.className = 'bg-white p-6 rounded-lg shadow-lg transition-transform transform hover:scale-105 hover:shadow-2xl';
+
+                    itemCard.innerHTML = `
+                        <img src="http://localhost:3000${item.file_path}" alt="${item.title}" class="w-full h-64 object-cover rounded-lg mb-4">
+                        <h3 class="text-2xl font-semibold text-gray-800">${item.title}</h3>
+                        <p class="text-gray-600 mt-2 mb-4">${item.description}</p>
+                        <p class="text-sm text-gray-500">Uploaded: ${new Date(item.date_created).toLocaleDateString()}</p>
+                        <div class="flex justify-between mt-4">
+                            <button onclick="promptForPin(${item.id}, '${item.pin}', 'edit')" class="bg-gray-800 text-white py-2 px-4 rounded-md hover:bg-gray-900 font-semibold">Edit</button>
+                            <button onclick="promptForPin(${item.id}, '${item.pin}', 'delete')" class="bg-gray-800 text-white py-2 px-4 rounded-md hover:bg-gray-900 font-semibold">Delete</button>
+                        </div>
+                    `;
+                    itemList.appendChild(itemCard);
+                });
+            } else {
+                itemList.innerHTML = '<p class="text-gray-600 text-center">No items found.</p>';
+            }
+        }
+
+        function promptForPin(itemId, itemPin, action) {
+            currentItemId = itemId;
+            currentItemPin = itemPin;
+            currentAction = action;
+            document.getElementById('pinModal').classList.remove('hidden');
+        }
+
+        document.getElementById('pinSubmitButton').addEventListener('click', function () {
+            const enteredPin = document.getElementById('pinInput').value;
+            if (enteredPin === currentItemPin) {
+                if (currentAction === 'edit') {
+                    editItem(currentItemId);
+                } else if (currentAction === 'delete') {
+                    deleteItem(currentItemId);
+                }
+                closeModal();
+            } else {
+                alert('Incorrect PIN.');
+            }
+        });
+
+        function closeModal() {
+            document.getElementById('pinModal').classList.add('hidden');
+            document.getElementById('pinInput').value = ''; 
+        }
+
+        function editItem(id) {
+            const updatedData = {
+                title: "Updated Title", 
+                description: "Updated description for the art piece.", 
+            };
+
+            fetch(`http://localhost:3000/art-items/${id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer nutchtfulor`  
+                },
+                body: JSON.stringify(updatedData),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Item updated successfully');
+                    loadUploadedItems(); 
+                } else {
+                    alert('Error updating item.');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating item:', error);
+                alert('Error updating item.');
+            });
+        }
+
+        function deleteItem(id) {
+            const pin = document.getElementById('pinInput').value;
+            if (pin) {
+                fetch(`http://localhost:3000/delete-art/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ pin: pin }),
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert('Item deleted successfully');
+                        loadUploadedItems();
+                    })
+                    .catch(error => {
+                        console.error('Error deleting item:', error);
+                        alert('Error deleting item.');
+                    });
+            } else {
+                alert('Please enter a valid PIN.');
+            }
+        }
+
+        function applyDateFilter() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const url = new URL('http://localhost:3000/art-items');
+            const params = new URLSearchParams();
+
+            if (startDate) params.append('startDate', startDate);
+            if (endDate) params.append('endDate', endDate);
+
+            fetch(url + '?' + params.toString(), {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer nutchtfulor`, 
+                },
+            })
+                .then(response => response.json())
+                .then(data => {
+                    renderItems(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching filtered items:', error);
+                });
+        }
+
+        window.onload = loadUploadedItems;
+    </script>
+</body>
+
+</html>
