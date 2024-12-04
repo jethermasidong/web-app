@@ -16,17 +16,12 @@ const allowedOrigins = [
   'https://web-app-mgx2.onrender.com'
 ];
 
+app.use(express.static(__dirname));
+
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.get('/upload', (req, res) => {
-  res.sendFile(path.join(__dirname, 'upload.html'));
-});
-
-app.get('/collections', (req, res) => {
-  res.sendFile(path.join(__dirname, 'collections.html'));
-});
 
 app.use(cors({
   origin: function (origin, callback) {
