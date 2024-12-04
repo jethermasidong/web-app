@@ -12,6 +12,7 @@ const port = process.env.PORT || 3000;
 const europeanaApiKey = 'nutchtfulor';
 
 const allowedOrigins = [
+  'http://localhost:10000',
   'http://localhost:3000',
   'https://jethermasidong.github.io/web-app',
   'http://127.0.0.1:5500',
