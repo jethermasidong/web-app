@@ -94,10 +94,10 @@ app.post('/upload', upload.single('image'), (req, res) => {
 
   const { title, description, pin } = req.body;
   const filePath = `/uploads/${req.file.filename}`;
-
+  const dateCreated = new Date().toISOString();
   const insertQuery = `
-    INSERT INTO items (title, description, file_path, pin)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO items (title, description, file_path, pin, date_created)
+    VALUES (?, ?, ?, ?, ?)
   `;
   db.run(insertQuery, [title, description, filePath, pin || null], (err) => {
     if (err) {
