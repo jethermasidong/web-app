@@ -17,8 +17,8 @@ const allowedOrigins = [
 ];
 
 app.get('/', (req, res) => {
-  res.send('Welcome to my Render deployment!');
-}); 
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 app.use(cors({
   origin: function (origin, callback) {
