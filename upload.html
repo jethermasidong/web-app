@@ -171,7 +171,7 @@
         <main>
             <div class="upload-container">
                 <h2>Upload Your Art</h2>
-                <form id="uploadForm" action="http://localhost:3000/upload" method="POST" enctype="multipart/form-data">
+                <form id="uploadForm" action="https://web-app-mgx2.onrender.com/upload" method="POST" enctype="multipart/form-data">
                     <div>
                         <label for="title" class="font-semibold text-white">Title</label>
                         <input type="text" id="title" name="title" class="form-input" required>
@@ -234,7 +234,7 @@
 
             const formData = new FormData(form);
 
-            fetch('http://localhost:3000/upload', {
+            fetch('https://web-app-mgx2.onrender.com/upload', {
                 method: 'POST',
                 body: formData
             })
