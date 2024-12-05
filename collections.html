@@ -60,7 +60,7 @@
         let currentItemPin = '';
 
         function loadUploadedItems() {
-            fetch('http://localhost:10000/art-items', {
+            fetch('https://web-app-mgx2.onrender.com/art-items', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer nutchtfulor`
@@ -135,7 +135,7 @@
                 description: "Updated description for the art piece.", 
             };
 
-            fetch(`http://localhost:3000/art-items/${id}`, {
+            fetch(`https://web-app-mgx2.onrender.com/art-items/${id}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -161,7 +161,7 @@
         function deleteItem(id) {
             const pin = document.getElementById('pinInput').value;
             if (pin) {
-                fetch(`http://localhost:3000/delete-art/${id}`, {
+                fetch(`https://web-app-mgx2.onrender.com/delete-art/${id}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
@@ -185,7 +185,7 @@
         function applyDateFilter() {
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
-            const url = new URL('http://localhost:3000/art-items');
+            const url = new URL('https://web-app-mgx2.onrender.com/art-items');
             const params = new URLSearchParams();
 
             if (startDate) params.append('startDate', startDate);
