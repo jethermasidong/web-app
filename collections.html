@@ -191,22 +191,27 @@
             if (startDate) params.append('startDate', startDate);
             if (endDate) params.append('endDate', endDate);
 
-            fetch(url + '?' + params.toString(), {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer nutchtfulor`, 
-                },
-            })
-                .then(response => response.json())
-                .then(data => {
-                    renderItems(data);
+            // Ensure the URL includes valid parameters before sending the request
+            if (params.toString().length > 0) {
+                fetch(url + '?' + params.toString(), {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer nutchtfulor`, 
+                    },
                 })
-                .catch(error => {
-                    console.error('Error fetching filtered items:', error);
-                });
+                    .then(response => response.json())
+                    .then(data => {
+                        renderItems(data);
+                    })
+                    .catch(error => {
+                        console.error('Error applying date filter:', error);
+                    });
+            } else {
+                loadUploadedItems(); 
+            }
         }
 
-        window.onload = loadUploadedItems;
+        loadUploadedItems(); 
     </script>
 </body>
 
