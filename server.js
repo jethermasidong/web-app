@@ -16,7 +16,8 @@ const allowedOrigins = [
   'http://localhost:3000',
   'https://jethermasidong.github.io/web-app',
   'http://127.0.0.1:5500',
-  'https://web-app-mgx2.onrender.com'
+  'https://web-app-mgx2.onrender.com',
+  'https://web-app-mgx2.onrender.com/collections.html'
 ];
 
 
