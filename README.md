@@ -7,11 +7,14 @@
 Clone the Repository:
 
 git clone <your-repository-url>
+
 Install Dependencies: Navigate to the project folder and install the necessary dependencies:
 
 cd <project-folder>
 npm install
+
 Run the Project: Start the local server with:
 
 npm start
+
 Access the Website: Open your browser and visit http://localhost:3000 to view the website locally.
