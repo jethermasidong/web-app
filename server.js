@@ -199,7 +199,6 @@ app.patch('/update-art/:id', upload.single('image'), (req, res) => {
   });
 });
 
-// Route to delete art items
 app.delete('/delete-art/:id', (req, res) => {
   const artId = req.params.id;
   const { pin } = req.body;
@@ -243,7 +242,6 @@ app.delete('/delete-art/:id', (req, res) => {
   });
 });
 
-// Start the server
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });
