@@ -86,7 +86,7 @@
                     const itemCard = document.createElement('div');
                     itemCard.className = 'bg-white p-6 rounded-lg shadow-lg transition-transform transform hover:scale-105 hover:shadow-2xl';
                     itemList.innerHTML = '';
-                    const imagePath = encodeURI(`/uploads/${item.file_path}`);
+                    const imagePath = encodeURI(item.file_path);
 
                     itemCard.innerHTML = `
                         <img src="https://web-app-mgx2.onrender.com${imagePath}" alt="${item.title}" class="w-full h-64 object-cover rounded-lg mb-4">
