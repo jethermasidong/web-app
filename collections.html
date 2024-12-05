@@ -86,8 +86,10 @@
                     const itemCard = document.createElement('div');
                     itemCard.className = 'bg-white p-6 rounded-lg shadow-lg transition-transform transform hover:scale-105 hover:shadow-2xl';
 
+                    const imagePath = encodeURI(`/uploads/${item.file_path}`);
+                    
                     itemCard.innerHTML = `
-                        <img src="<img src="https://web-app-mgx2.onrender.com/uploads/${item.file_path}" alt="${item.title}" class="w-full h-64 object-cover rounded-lg mb-4">
+                        <img src="<img src="https://web-app-mgx2.onrender.com${imagePath}" alt="${item.title}" class="w-full h-64 object-cover rounded-lg mb-4">
                         <h3 class="text-2xl font-semibold text-gray-800">${item.title}</h3>
                         <p class="text-gray-600 mt-2 mb-4">${item.description}</p>
                         <p class="text-sm text-gray-500">Uploaded: ${new Date(item.date_created).toLocaleDateString()}</p>

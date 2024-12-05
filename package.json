@@ -26,5 +26,8 @@
     "API",
     "CRUD",
     "Web App"
-  ]
+  ],
+  "devDependencies": {
+    "tailwindcss": "^3.4.16"
+  }
 }

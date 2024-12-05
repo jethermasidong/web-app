@@ -244,7 +244,7 @@ app.delete('/delete-art/:id', (req, res) => {
     });
   });
 });
-
+console.log(art-items);
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });
