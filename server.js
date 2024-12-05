@@ -83,6 +83,8 @@ const upload = multer({ storage: storage });
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
+app.use('/uploads', express.static('uploads'));
+
 
 app.get('/upload', (req, res) => {
   res.sendFile(path.join(__dirname, 'upload.html'));
