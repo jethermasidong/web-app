@@ -83,12 +83,6 @@ const upload = multer({ storage: storage });
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-app.use('/uploads', express.static('uploads', {
-  setHeaders: (res, path) => {
-    console.log('Serving static file:', path);
-  }
-}));
-
 
 app.get('/upload', (req, res) => {
   res.sendFile(path.join(__dirname, 'upload.html'));
