@@ -20,9 +20,7 @@ const allowedOrigins = [
   'https://web-app-mgx2.onrender.com/collections.html'
 ];
 
-
 app.use(express.static(__dirname));
-
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
@@ -85,7 +83,6 @@ app.use(express.json());
 
 app.use('/uploads', express.static('uploads'));
 
-
 app.get('/upload', (req, res) => {
   res.sendFile(path.join(__dirname, 'upload.html'));
 });
@@ -97,12 +94,12 @@ app.post('/upload', upload.single('image'), (req, res) => {
 
   const { title, description, pin } = req.body;
   const filePath = `/uploads/${req.file.filename}`;
-  const dateCreated = new Date().toISOString();
+  const dateCreated = new Date().toLocaleString();  // Format date as local string
   const insertQuery = `
     INSERT INTO items (title, description, file_path, pin, date_created)
     VALUES (?, ?, ?, ?, ?)
   `;
-  db.run(insertQuery, [title, description, filePath, pin || null], (err) => {
+  db.run(insertQuery, [title, description, filePath, pin || null, dateCreated], (err) => {
     if (err) {
       console.error('Error inserting data into database:', err.message);
       return res.status(500).json({ message: 'Database error' });
@@ -119,6 +116,12 @@ app.get('/art-items', (req, res) => {
       console.error('Error fetching art items:', err.message);
       return res.status(500).json({ message: 'Error fetching art items' });
     }
+
+    // Format the date for each row before sending it back
+    rows.forEach(row => {
+      row.date_created = new Date(row.date_created).toLocaleString(); // Localize the date
+    });
+
     res.status(200).json(rows);
   });
 });
@@ -135,6 +138,7 @@ app.get('/art-item/:id', (req, res) => {
     if (!row) {
       return res.status(404).json({ message: 'Art item not found' });
     }
+    row.date_created = new Date(row.date_created).toLocaleString(); // Localize the date
     res.status(200).json(row);
   });
 });
